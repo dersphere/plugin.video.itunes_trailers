@@ -94,7 +94,6 @@ class MovieScraper(object):
 
     def __get_json(self, source):
         url = self.MOVIES_URL % source
-        print url
         headers = {'User-Agent': USER_AGENT}
         req = urllib2.Request(url, None, headers)
         try:
@@ -135,7 +134,6 @@ class TrailerScraper(object):
 
     def __get_tree(self, location):
         url = self.TRAILERS_URL % location
-        print url
         headers = {'User-Agent': USER_AGENT}
         req = urllib2.Request(url, None, headers)
         try:
