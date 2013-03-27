@@ -107,7 +107,7 @@ def download_trailer(location, trailer_url):
     downloads.sync()
 
 
-#@plugin.cached()
+@plugin.cached()
 def get_movies(source, limit):
     scraper = MovieScraper()
     if source == 'all':
