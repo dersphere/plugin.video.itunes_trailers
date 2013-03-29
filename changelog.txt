@@ -1,3 +1,6 @@
+0.0.2 (unreleased)
+- added possibility to have different qualities for stream and download
+
 0.0.1 (28.03.2013)
 - initial release
   Features:
