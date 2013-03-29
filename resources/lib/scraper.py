@@ -132,9 +132,6 @@ class TrailerScraper(object):
             }
             yield trailer
 
-    def get_in_other_resolution(self, trailer_url, new_resolution):
-        return trailer_url.split('_h')[0] + '_h%sp.mov' % new_resolution
-
     def __get_tree(self, location):
         url = self.TRAILERS_URL % location
         headers = {'User-Agent': USER_AGENT}
