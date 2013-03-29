@@ -98,6 +98,9 @@ class MovieScraper(object):
         req = urllib2.Request(url, None, headers)
         try:
             return json.load(urllib2.urlopen(req))
+        except AttributeError:
+            # json.load is only python >= 2.7
+            return json.loads(urllib2.urlopen(req).read())
         except urllib2.HTTPError, error:
             raise NetworkError('HTTPError: %s' % error)
 
