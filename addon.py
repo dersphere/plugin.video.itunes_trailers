@@ -57,11 +57,17 @@ def show_movies():
 
 @plugin.route('/movie/<movie_title>/<location>/show/')
 def show_trailers(movie_title, location):
-    resolution = plugin.get_setting(
+    play_resolution = plugin.get_setting(
         'trailer_quality',
         choices=('480', '720', '1080')
     )
-    items = get_trailers(movie_title, location, resolution)
+    download_resolution = plugin.get_setting(
+        'trailer_quality_download',
+        choices=(play_resolution, '480', '720', '1080')
+    )
+    items = get_trailers(
+        movie_title, location, play_resolution, download_resolution
+    )
     finish_kwargs = {
         'sort_methods': ['date', 'playlist_order']
     }
@@ -70,19 +76,19 @@ def show_trailers(movie_title, location):
     return plugin.finish(items, **finish_kwargs)
 
 
-@plugin.route('/trailer/play/<location>/<trailer_url>')
-def play_trailer(location, trailer_url):
+@plugin.route('/trailer/play/<play_url>')
+def play_trailer(play_url):
     downloads = plugin.get_storage('downloads')
-    if trailer_url in downloads:
-        if xbmcvfs.exists(downloads[trailer_url]):
-            trailer_url = downloads[trailer_url]
-            return plugin.set_resolved_url(trailer_url)
-    trailer_url += '?|User-Agent=%s' % USER_AGENT
-    return plugin.set_resolved_url(trailer_url)
+    if play_url in downloads:
+        if xbmcvfs.exists(downloads[play_url]):
+            play_url = downloads[play_url]
+            return plugin.set_resolved_url(play_url)
+    play_url += '?|User-Agent=%s' % USER_AGENT
+    return plugin.set_resolved_url(play_url)
 
 
-@plugin.route('/trailer/download/<location>/<trailer_url>')
-def download_trailer(location, trailer_url):
+@plugin.route('/trailer/download/<download_url>/<play_url>')
+def download_trailer(download_url, play_url):
     import SimpleDownloader
     sd = SimpleDownloader.SimpleDownloader()
     sd.common.USERAGENT = USER_AGENT
@@ -96,14 +102,14 @@ def download_trailer(location, trailer_url):
             return
         plugin.open_settings()
         download_path = plugin.get_setting('trailer_download_path')
-    filename = trailer_url.split('/')[-1]
+    filename = download_url.split('/')[-1]
     params = {
-        'url': trailer_url,
+        'url': download_url,
         'download_path': download_path
     }
     sd.download(filename, params)
     downloads = plugin.get_storage('downloads')
-    downloads[trailer_url] = xbmc.translatePath(download_path + filename)
+    downloads[play_url] = xbmc.translatePath(download_path + filename)
     downloads.sync()
 
 
@@ -161,17 +167,23 @@ def get_movies(source, limit):
     return items
 
 
-def get_trailers(movie_title, location, resolution):
+def get_trailers(movie_title, location, resolution_play, resolution_download):
+
+    def get_url(urls, resolution):
+        return [u for u in urls if resolution in u][0]
+
     scraper = TrailerScraper()
-    trailers = scraper.get_trailers(location, resolution)
+    trailers = scraper.get_trailers(location)
     downloads = plugin.get_storage('downloads')
     items = []
     for i, trailer in enumerate(trailers):
         title = '%s - %s (%s) ' % (
             movie_title, trailer['title'], trailer['duration']
         )
-        if trailer['url'] in downloads:
-            if xbmcvfs.exists(downloads[trailer['url']]):
+        play_url = get_url(trailer['urls'], resolution_play)
+        download_url = get_url(trailer['urls'], resolution_download)
+        if play_url in downloads:
+            if xbmcvfs.exists(downloads[play_url]):
                 title += _('already_downloaded')
             else:
                 title += _('download_in_progress')
@@ -187,16 +199,15 @@ def get_trailers(movie_title, location, resolution):
             'context_menu': [
                 (_('download_trailer'), 'XBMC.RunPlugin(%s)' % plugin.url_for(
                     endpoint='download_trailer',
-                    location=location,
-                    trailer_url=trailer['url']
+                    download_url=download_url,
+                    play_url=play_url,
                 ))
             ],
             'is_playable': True,
             'thumbnail': trailer['thumb'],
             'path': plugin.url_for(
                 endpoint='play_trailer',
-                location=location,
-                trailer_url=trailer['url']
+                play_url=play_url
             )
         })
     return items

@@ -107,7 +107,7 @@ class TrailerScraper(object):
     TRAILERS_URL = BASE_URL + '/%s/includes/playlists/web.inc'
     BACKGROUND_URL = BASE_URL + '/%s/images/background.jpg'
 
-    def get_trailers(self, location, resolution):
+    def get_trailers(self, location):
         tree = self.__get_tree(location)
         trailer_re = re.compile('trailer')
         for li in tree.findAll('li', {'class': trailer_re}):
@@ -117,20 +117,23 @@ class TrailerScraper(object):
                 section = li
             else:
                 section = tree
-            for a in section.findAll('a', {'class': 'target-quicktimeplayer'}):
-                if str(resolution) in str(a['href']):
-                    cap = a.contents[0]
-                    trailer_url = a['href']
-                    m, d, y = date_str.split()[1].split('/')
-                    trailer = {
-                        'title': li.find('h3').string,
-                        'date': '%s.%s.20%s' % (d, m, y),
-                        'duration': duration_str.split()[1],
-                        'thumb': li.find('img')['src'],
-                        'background': self.BACKGROUND_URL % location,
-                        'url': trailer_url
-                    }
-                    yield trailer
+            trailer_urls = [
+                a['href'] for a in
+                section.findAll('a', {'class': 'target-quicktimeplayer'})
+            ]
+            m, d, y = date_str.split()[1].split('/')
+            trailer = {
+                'title': li.find('h3').string,
+                'date': '%s.%s.20%s' % (d, m, y),
+                'duration': duration_str.split()[1],
+                'thumb': li.find('img')['src'],
+                'background': self.BACKGROUND_URL % location,
+                'urls': trailer_urls
+            }
+            yield trailer
+
+    def get_in_other_resolution(self, trailer_url, new_resolution):
+        return trailer_url.split('_h')[0] + '_h%sp.mov' % new_resolution
 
     def __get_tree(self, location):
         url = self.TRAILERS_URL % location
