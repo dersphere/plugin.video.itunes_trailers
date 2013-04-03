@@ -10,6 +10,11 @@
         <provides>video</provides>
     </extension>
     <extension point="xbmc.addon.metadata">
+        <website>http://trailers.apple.com/</website>
+        <source>https://github.com/dersphere/plugin.video.itunes_trailers</source>
+        <forum>http://forum.xbmc.org/showthread.php?tid=160691</forum>
+        <email>sphere@dersphere.de</email>
+        <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
         <language></language>
         <platform>all</platform>
         <summary lang="en">Apple iTunes Trailer Browser</summary>
