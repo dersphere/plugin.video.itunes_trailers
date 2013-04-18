@@ -128,7 +128,7 @@ class TrailerScraper(object):
             trailer = {
                 'title': li.find('h3').string,
                 'date': '%s.%s.20%s' % (d, m, y),
-                'duration': duration_str.split()[1],
+                'duration': duration_str.split('Runtime:')[-1].strip(),
                 'thumb': li.find('img')['src'],
                 'background': self.BACKGROUND_URL % location,
                 'urls': trailer_urls
