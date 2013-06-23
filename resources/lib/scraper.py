@@ -24,6 +24,7 @@ import urllib2
 import re
 
 BASE_URL = 'http://trailers.apple.com/trailers'
+COVER_BASE_URL = 'http://trailers.apple.com'
 USER_AGENT = 'iTunes'
 
 
@@ -34,7 +35,6 @@ class NetworkError(Exception):
 class MovieScraper(object):
 
     MOVIES_URL = BASE_URL + '/home/feeds/%s.json'
-    COVER_BASE_URL = 'http://trailers.apple.com'
 
     def get_all_movies(self, limit, filter_dict=None):
         return self._get_movies('studios', limit, filter_dict)
@@ -52,12 +52,12 @@ class MovieScraper(object):
 
         def __poster(url):
             if not url.startswith('http'):
-                url = self.COVER_BASE_URL + url
+                url = COVER_BASE_URL + url
             return url.replace('poster', 'poster-xlarge')
 
         def __background(url):
             if not url.startswith('http'):
-                url = self.COVER_BASE_URL + url
+                url = COVER_BASE_URL + url
             return url.replace('poster', 'background')
 
         def __date(date_str):
@@ -117,6 +117,12 @@ class TrailerScraper(object):
     OVERLAY_URL = BASE_URL + '/%s/includes/%s/extralarge.html'
 
     def get_trailers(self, location):
+
+        def __thumb(url):
+            if not url.startswith('http'):
+                url = COVER_BASE_URL + url
+            return url
+
         tree = self.__get_tree(self.TRAILERS_URL % location)
         trailer_re = re.compile('trailer')
         for li in tree.findAll('li', {'class': trailer_re}):
@@ -152,7 +158,7 @@ class TrailerScraper(object):
                 'title': li.find('h3').string,
                 'date': '%s.%s.20%s' % (d, m, y),
                 'duration': duration_str.split('Runtime:')[-1].strip(),
-                'thumb': li.find('img')['src'],
+                'thumb': __thumb(li.find('img')['src']),
                 'background': self.BACKGROUND_URL % location,
                 'urls': trailer_urls
             }
