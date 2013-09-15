@@ -17,7 +17,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup, BeautifulStoneSoup
 from email.utils import parsedate_tz
 import json
 import urllib2
@@ -170,5 +170,28 @@ class TrailerScraper(object):
         print 'Opening URL: %s' % url
         try:
             return BeautifulSoup(urllib2.urlopen(req).read())
+        except urllib2.HTTPError, error:
+            raise NetworkError('HTTPError: %s' % error)
+
+
+class MoviePlotScraper(object):
+
+    MOVIES_URL = BASE_URL + '/home/xml/current.xml'
+
+    def get_movie_plots(self):
+        tree = self.__get_tree(self.MOVIES_URL)
+        movie_plots = {}
+        for movie in tree.findAll('movieinfo'):
+            title = movie.find('info').find('title').string
+            plot = movie.find('info').find('description').string
+            movie_plots[title] = plot
+        return movie_plots
+
+    def __get_tree(self, url):
+        headers = {'User-Agent': USER_AGENT}
+        req = urllib2.Request(url, None, headers)
+        print 'Opening URL: %s' % url
+        try:
+            return BeautifulStoneSoup(urllib2.urlopen(req).read())
         except urllib2.HTTPError, error:
             raise NetworkError('HTTPError: %s' % error)
